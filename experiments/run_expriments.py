@@ -1,0 +1,118 @@
+import os
+from configparser import ConfigParser, ExtendedInterpolation
+import time
+from datetime import datetime
+import shutil
+
+def install_tools():
+    if os.path.exists("rmlmapper")==True:
+        if os.path.exists(".\\rmlmapper\\target_backup\\target\\")==True:
+            shutil.rmtree(".\\rmlmapper\\target_backup\\target\\")
+        shutil.copytree(".\\rmlmapper\\target\\", ".\\rmlmapper\\target_backup\\target\\")
+        shutil.rmtree(".\\rmlmapper\\target\\")
+        os.system("git -C .\\rmlmapper pull origin master")
+        pom=[]
+        with open(".\\rmlmapper\\pom.xml", 'r') as f_read:
+            pom=f_read.readlines()
+            pom_bkp=pom[:]
+            pom_finalname=list(filter(lambda x: "<finalName>" in x, pom))
+            pom_line=pom.index(pom_finalname[0])
+            pom_finalname_value=pom[pom_line].strip()
+            pom[pom_line]=pom[pom_line].replace(pom_finalname_value,"<finalName>rmlmapper</finalName>")
+        f_write=open(".\\rmlmapper\\pom.xml", 'w') 
+        f_write.writelines(pom)
+        f_write.close()
+        os.system("mvn clean install -DskipTests -f .\\rmlmapper")
+        f_write=open(".\\rmlmapper\\pom.xml", 'w') 
+        f_write.writelines(pom_bkp)
+        f_write.close()
+        #os.system("mvn clean install -DskipTests -f C:\\Users\TorabinejadM\Desktop\Thesis\implementation\\normalization-experiments\\rmlmapper")
+    else:
+        os.system("git clone https://github.com/RMLio/rmlmapper-java.git rmlmapper")
+        os.system("mvn clean install -DskipTests -f .\\rmlmapper")
+    
+    if os.path.exists("rocketrml")==True:
+        os.system("git -C .\\rocketrml pull origin master")
+    else:
+        os.system("git clone https://github.com/semantifyit/RocketRML.git rocketrml")
+    
+    if os.path.exists("sdm-rdfizer")==True:
+        os.system("git -C .\\sdm-rdfizer pull origin master")
+    else:
+        os.system("git clone https://github.com/SDM-TIB/SDM-RDFizer.git sdm-rdfizer")
+
+def main():
+    print(__name__)
+    os.system("echo ***************Start***************************")
+    #default_main_dir="C:\\Users\TorabinejadM\Desktop\Thesis\implementation\\sdm-tib-github\\rml-normalizer\\experiments"
+    default_main_dir="."
+    default_map_folder="\\mappings\\"
+    default_output_folder="\\graph\\"
+    default_config_folder="\\rdfizer\\"
+    default_stats_header="NAME,RDFIZER,STARTED_AT,EXECUTION_TIME"
+    default_stats_filename="all_stats.csv"
+    #used only for SDM-rdfizer
+    default_config_filename="configfile.ini"
+    #default_main_dir_var="${default:main_directory}"
+    
+    mapping_name="mapping"
+    rdfizers=["sdm-rdfizer","rmlmapper","rocketrml"]
+    
+    mapping_file=default_main_dir+default_map_folder+mapping_name+".ttl"
+    #used only for SDM-rdfizer
+    config_file=default_main_dir+"\\sdm-rdfizer\\rdfizer\\"+default_config_filename
+    
+    dt_format='%d.%m.%Y %H:%M:%S,%f'
+    
+    #Due to complexities for cloning and installing rocketrml, the development of this function is already stopped. It can be dveloped further at a later time.
+    #install_tools()
+    
+    try:
+                    with open(default_main_dir+default_output_folder+default_stats_filename, 'r') as f_in:
+                                    default_stats_header=f_in.readline()
+    except FileNotFoundError as e:
+                    with open(default_main_dir+default_output_folder+default_stats_filename, 'a+',newline="") as f_out:
+                                    f_out.write(default_stats_header+"\n")
+    
+    for i in range(len(rdfizers)):
+                    os.system("echo ***************"+rdfizers[i]+"***************************")
+                    output_name=mapping_name+"_"+rdfizers[i]
+                    output_path=default_main_dir+default_output_folder
+                    output_file=output_path+output_name+".nt"
+                    
+                    if i==0:
+                                    config = ConfigParser(interpolation=ExtendedInterpolation())
+                                    config.read(config_file)
+                                    #config.set("default", "main_directory",default_main_dir)
+                                    config.set("datasets", "output_folder",output_path)
+                                    config.set("datasets", "number_of_datasets","1")
+                                    config.set("datasets", "name",mapping_name)
+                                    config.set("dataset1", "name",output_name)
+                                    config.set("dataset1", "mapping",mapping_file)
+                                    with open(config_file, 'w') as configfile:
+                                                    config.write(configfile)
+                                    v_call="python .\\sdm-rdfizer\\rdfizer\\run_rdfizer.py "+ config_file
+                    elif i==1:
+                                    v_arguments="-m "+mapping_file+" -o "+output_file
+                                    v_call="java -jar .\\rmlmapper\\target\\rmlmapper.jar "+v_arguments
+                    elif i==2:
+                                    v_arguments=mapping_file+" "+output_file
+                                    v_call="node .\\rocketrml\\index.js "+v_arguments
+    
+                    dt_now = datetime.now().strftime(dt_format)
+                    start_time=time.time()
+                    print("started at:",dt_now)
+                    os.system(v_call)
+                    v_elpased_time=time.time()-start_time
+                    print("execuion time: {} seconds".format(v_elpased_time))
+                    
+                    with open(default_main_dir+default_output_folder+default_stats_filename, 'a+',newline="") as f_out:
+                                    f_out.write(mapping_name+","+rdfizers[i]+",\""+str(dt_now)+"\","+str(v_elpased_time)+"\n")
+    
+    #To remove extra files generate by SDM-rdfizer
+    os.remove(default_main_dir+default_output_folder+"stats.csv")
+    os.remove(default_main_dir+default_output_folder+mapping_name+"_datasets_stats.csv")
+
+
+if __name__=="__main__":
+    main()
