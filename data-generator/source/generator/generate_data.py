@@ -1,3 +1,4 @@
+import pandas as pd
 import time
 from datetime import datetime
 from treelib import Node, Tree
@@ -16,6 +17,9 @@ output_file=".\\output\\data.csv"
 first_level=8
 first_letter=65
 dt_format='%d.%m.%Y %H:%M:%S,%f'
+global all_out_text
+#all_out_text=""
+all_out_text=[]
 #//////////////////////////////////////////
 
 def set_fd():    
@@ -99,15 +103,18 @@ def update_input(current_level=1):
     return v_add_up
 
 def set_col_headers():
-    with open(output_file, 'a+',newline="") as f_out:
+    with open(output_file, 'w',newline="") as f_out:
         for i in range(1,first_level+1):
             if first_level!=i:
                 f_out.write(chr(first_letter+first_level-i)+',')
             else:
                 f_out.write(chr(first_letter+first_level-i)+'\n')
+        f_out.close()
 
-def generate_data(level=0,tree=Tree(),parent="",parent_index=0,out_text="",start=1,end=3,addup=0):
+def generate_data(level=0,tree=Tree(),parent="",parent_index=0,out_text=[],start=1,end=3,addup=0,node_id=""):
+#def generate_data(level=0,tree=Tree(),parent="",parent_index=0,out_text="",start=1,end=3,addup=0):
     try:
+        global all_out_text
         letter=first_letter+first_level-level
         if level!=0:
             num_of_dups=fd_dict["level"+str(level)]["dups"]
@@ -116,14 +123,28 @@ def generate_data(level=0,tree=Tree(),parent="",parent_index=0,out_text="",start
                 if is_parent==False:
                     num_of_distinct_vals=fd_dict["level"+str(level)]["number_of_distinct_vals"]
                     for i in range(1,num_of_distinct_vals+1):
-                        tree.create_node(chr(letter)+str(i), out_text+chr(letter)+str(i),parent)
-                        with open(output_file, 'a+',newline="") as f_out:
-                            f_out.write(out_text+chr(letter)+str(i)+"\n")
+                        #tree.create_node(chr(letter)+str(i), node_id+chr(letter)+str(i),parent)
+                        ###########Using normal I/O######################
+                        #all_out_text=all_out_text+out_text+chr(letter)+str(i)+"\n"
+                        #with open(output_file, 'a+',newline="") as f_out:
+                        #    f_out.write(out_text+chr(letter)+str(i)+"\n")
+                        #    f_out.close()
+                        ###########Using pandas######################
+                        out_text.append(chr(letter)+str(i))
+                        all_out_text.append(out_text[:])
+                        del out_text[-1]
                 else:
                     for i in range(start,end):
-                        tree.create_node(chr(letter)+str(i),out_text+chr(letter)+str(i),parent)
-                        with open(output_file, 'a+',newline="") as f_out:
-                            f_out.write(out_text+chr(letter)+str(i)+"\n")
+                        #tree.create_node(chr(letter)+str(i),node_id+chr(letter)+str(i),parent)
+                        ###########Using normal I/O######################
+                        #all_out_text=all_out_text+out_text+chr(letter)+str(i)+"\n"
+                        #with open(output_file, 'a+',newline="") as f_out:
+                        #    f_out.write(out_text+chr(letter)+str(i)+"\n")
+                        #    f_out.close()
+                        ###########Using pandas######################
+                        out_text.append(chr(letter)+str(i))
+                        all_out_text.append(out_text[:])
+                        del out_text[-1]
             elif level==1:
                 number_of_dup_values=fd_dict["level"+str(level)]["number_of_dup_values"] #it should be clacualted (according to some formula based on the total number of records)
                 number_of_values=fd_dict["level"+str(level)]["number_of_distinct_vals"] #it should be clacualted (according to some formula based on the total number of records)
@@ -135,10 +156,12 @@ def generate_data(level=0,tree=Tree(),parent="",parent_index=0,out_text="",start
                     else:
                         start_point=(i-1)*next_num_of_distinct_vals+1
                         end_point=(i)*next_num_of_distinct_vals+1
-                    out_text=out_text.replace(chr(letter)+str(i-1)+",","")
-                    out_text=out_text+chr(letter)+str(i)+","
-                    tree.create_node(chr(letter)+str(i),out_text,parent)
-                    generate_data(level+1,tree,parent=out_text,parent_index=i,out_text=out_text,start=start_point,end=end_point)
+                    #node_id=node_id.replace(chr(letter)+str(i-1)+",","")
+                    #node_id=node_id+chr(letter)+str(i)+","
+                    out_text.append(chr(letter)+str(i))
+                    #tree.create_node(chr(letter)+str(i),node_id,parent)
+                    generate_data(level+1,tree,parent=node_id,parent_index=i,out_text=out_text,start=start_point,end=end_point,node_id=node_id)
+                    del out_text[-1]
             else:
                 if is_parent==False:
                     num_of_distinct_vals=fd_dict["level"+str(level)]["number_of_distinct_vals"]
@@ -153,10 +176,12 @@ def generate_data(level=0,tree=Tree(),parent="",parent_index=0,out_text="",start
                         else:
                             start_point=v_addup+(i-1)*next_num_of_distinct_vals+1+not_dup_factor*(number_of_dup_values-num_of_distinct_vals)
                             end_point=v_addup+i*next_num_of_distinct_vals+1+not_dup_factor*(number_of_dup_values-num_of_distinct_vals)
-                        out_text=out_text.replace(chr(letter)+str(i-1)+",","")
-                        out_text=out_text+chr(letter)+str(i)+","
-                        tree.create_node(chr(letter)+str(i),out_text,parent)
-                        generate_data(level+1,tree,parent=out_text,parent_index=i,out_text=out_text,start=start_point,end=end_point,addup=v_addup)
+                        #node_id=node_id.replace(chr(letter)+str(i-1)+",","")
+                        #node_id=node_id+chr(letter)+str(i)+","
+                        out_text.append(chr(letter)+str(i))
+                        #tree.create_node(chr(letter)+str(i),node_id,parent)
+                        generate_data(level+1,tree,parent=node_id,parent_index=i,out_text=out_text,start=start_point,end=end_point,addup=v_addup,node_id=node_id)
+                        del out_text[-1]
                 else:
                     for i in range(start,end):
                         num_of_distinct_vals=fd_dict["level"+str(level)]["number_of_distinct_vals"]
@@ -169,10 +194,12 @@ def generate_data(level=0,tree=Tree(),parent="",parent_index=0,out_text="",start
                         else:
                             start_point=(i-1)*next_num_of_distinct_vals+1+not_dup_factor*(number_of_dup_values-num_of_distinct_vals)
                             end_point=i*next_num_of_distinct_vals+1+not_dup_factor*(number_of_dup_values-num_of_distinct_vals)
-                        out_text=out_text.replace(chr(letter)+str(i-1)+",","")
-                        out_text=out_text+chr(letter)+str(i)+","
-                        tree.create_node(chr(letter)+str(i),out_text,parent)
-                        generate_data(level+1,tree,parent=out_text,parent_index=i,out_text=out_text,start=start_point,end=end_point,addup=0)
+                        #node_id=node_id.replace(chr(letter)+str(i-1)+",","")
+                        #node_id=node_id+chr(letter)+str(i)+","
+                        out_text.append(chr(letter)+str(i))
+                        #tree.create_node(chr(letter)+str(i),node_id,parent)
+                        generate_data(level+1,tree,parent=node_id,parent_index=i,out_text=out_text,start=start_point,end=end_point,addup=0,node_id=node_id)
+                        del out_text[-1]
         else:
             try:
                 os.remove(output_file)
@@ -182,8 +209,25 @@ def generate_data(level=0,tree=Tree(),parent="",parent_index=0,out_text="",start
             set_fd()
             for i in range(1,first_level+1):
                 update_input(i)
-            tree.create_node("root", "root")
+            #tree.create_node("root", "root")
             generate_data(level+1,tree,parent="root")
+            
+            #text_to_save = pd.DataFrame(all_out_text, columns=['H', 'G','F','E','D','C','B','A'])
+            #text_to_save.to_csv(output_file,index=False)
+            
+            ###########Using normal I/O######################
+            #with open(output_file, 'a+',newline="") as f_out:
+            #    f_out.write(all_out_text)
+            #    f_out.close()
+            ###########Using pandas######################
+            
+            ###########Using normal I/O######################
+            with open(output_file, 'a+',newline='') as f_out:
+                writer = csv.writer(f_out)
+                writer.writerows(all_out_text)
+                f_out.close()
+            ###########Using pandas######################
+            
             print("Done!")
             #print(tree.show())
     except Exception as e:
