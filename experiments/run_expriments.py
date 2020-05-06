@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 import os
 from configparser import ConfigParser, ExtendedInterpolation
 import time
@@ -43,8 +44,10 @@ def install_tools():
     else:
         os.system("git clone https://github.com/SDM-TIB/SDM-RDFizer.git sdm-rdfizer")
 
-def main():
-    print(__name__)
+def run_experiments():
+    global stat_data
+    stat_data=""
+    #print(__name__)
     os.system("echo ***************Start***************************")
     #default_main_dir="C:\\Users\TorabinejadM\Desktop\Thesis\implementation\\sdm-tib-github\\rml-normalizer\\experiments"
     default_main_dir="."
@@ -58,9 +61,8 @@ def main():
     #default_main_dir_var="${default:main_directory}"
     
     mapping_name="mapping"
-    rdfizers=["sdm-rdfizer","rmlmapper","rocketrml"]
+    rdfizers=["rocketrml","sdm-rdfizer","rmlmapper"]
     
-    mapping_file=default_main_dir+default_map_folder+mapping_name+".ttl"
     #used only for SDM-rdfizer
     config_file=default_main_dir+"\\sdm-rdfizer\\rdfizer\\"+default_config_filename
     
@@ -70,11 +72,11 @@ def main():
     #install_tools()
     
     try:
-                    with open(default_main_dir+default_output_folder+default_stats_filename, 'r') as f_in:
-                                    default_stats_header=f_in.readline()
+        with open(default_main_dir+default_output_folder+default_stats_filename, 'r') as f_in:
+            default_stats_header=f_in.readline()
     except FileNotFoundError as e:
-                    with open(default_main_dir+default_output_folder+default_stats_filename, 'a+',newline="") as f_out:
-                                    f_out.write(default_stats_header+"\n")
+        with open(default_main_dir+default_output_folder+default_stats_filename, 'a+',newline="") as f_out:
+            f_out.write(default_stats_header+"\n")
     
     entries = os.listdir(default_main_dir+default_map_folder)
     print(entries)
