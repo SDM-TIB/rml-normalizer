@@ -257,14 +257,6 @@ def mapping_parser(mapping_file):
             triples_map_list += [current_triples_map]
 
     return triples_map_list
-
-def get_key(my_dict,val):
-        i=0
-        for v, k in my_dict.items():
-                if v==val:
-                                return v
-        return -1
-        return "key doesn't exist"
         
 
 def fd_parser(mapping_file):
