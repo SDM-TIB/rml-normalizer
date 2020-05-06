@@ -1,3 +1,3 @@
-from generator.generate_data import generate_data
+from generator.generate_data import run_generation
 import sys
-generate_data()
+run_generation(number_of_datasets=int(sys.argv[1]),output_path=str(sys.argv[2]))
