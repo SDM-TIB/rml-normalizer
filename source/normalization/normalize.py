@@ -1,3 +1,4 @@
+import shutil
 import time
 import pandas
 from rdflib import Namespace
@@ -50,6 +51,9 @@ global po_table
 po_table = {}
 global enrichment
 enrichment = ""
+
+v_csv_output_path = "C:\\Users\\TorabinejadM\\Desktop\\Thesis\\implementation\\sdm-tib-github\\rml-normalizer\\experiments\\csv\\"
+v_mapping_output_path="C:\\Users\\TorabinejadM\\Desktop\\Thesis\\implementation\\sdm-tib-github\\rml-normalizer\\experiments\\mappings\\"
 
 def mapping_parser(mapping_file):
 
@@ -188,8 +192,7 @@ def mapping_parser(mapping_file):
 
     mapping_query_results = mapping_graph.query(mapping_query)
     triples_map_list = []
-
-
+    
     for result_triples_map in mapping_query_results:
         triples_map_exists = False
         
@@ -287,9 +290,9 @@ def fd_parser(mapping_file):
     whole_list={}
     transitive_list={}
     for result_triples_map in mapping_query_results:
-            whole_list[str(result_triples_map.attr_name)]= str(result_triples_map.attr_name)
-            if result_triples_map.dep_name is not None:
-                    transitive_list[str(result_triples_map.attr_name)]= str(result_triples_map.dep_name)
+        whole_list[str(result_triples_map.attr_name)]= str(result_triples_map.attr_name)
+        if result_triples_map.dep_name is not None:
+            transitive_list[str(result_triples_map.attr_name)]= str(result_triples_map.dep_name)
     
     return transitive_list
         
@@ -299,24 +302,20 @@ def normalize_rules(triples_map, fd_file, data_source, output_path,mapping_file)
         fd_list=fd_file
         new_rml_graph = Graph()
         
-        base_uri='http://semweb.mmlab.be/'
+        #base_uri='http://semweb.mmlab.be/'
+        base_uri=Namespace("http://tib.de/ontario/mapping#")
         rml=Namespace("http://semweb.mmlab.be/ns/rml#")
         ql= Namespace("http://semweb.mmlab.be/ns/ql#")
         r2rml= Namespace("http://www.w3.org/ns/r2rml#")
         mThesis= Namespace("http://mThesis.eu/vocab/")
         mapping_file_name=os.path.splitext((os.path.basename(mapping_file)))[0]
-        print(mapping_file_name)
         new_rml_graph.parse(mapping_file, format='n3',publicID=base_uri)
         
         base_obj=new_rml_graph.value(subject=None,predicate=rml['referenceFormulation'], object=ql['CSV'])
         base=new_rml_graph.value(subject=None,predicate=rml['logicalSource'], object=base_obj)
-        print("############base uri#############")
-        print(base.replace(base_uri,''))
-        print("############base uri#############")
-        new_rml_file = output_path+"/"+mapping_file_name+"_normal.ttl"
+        new_rml_file = v_mapping_output_path+mapping_file_name+"_normal.ttl"
         deselected_cols=[]
         logial_source_node=new_rml_graph.value(subject=None,predicate=rml['referenceFormulation'], object=ql['CSV'])
-        print(logial_source_node)
         for predicate_object_map in triples_map.predicate_object_maps_list:
                 if predicate_object_map.object_map.mapping_type == "template":
                         object_value = re.search("{(.+?)}",predicate_object_map.object_map.value).group(1)
@@ -324,55 +323,79 @@ def normalize_rules(triples_map, fd_file, data_source, output_path,mapping_file)
                         object_value = predicate_object_map.object_map.value
                 join_condition = fd_list.get(object_value)
                 if join_condition is not None:
-                        new_source_file = output_path+"/PT_{}.csv"
-                        new_source_file = new_source_file.format(object_value)
-                        selected_cols =[ join_condition, object_value]
-                        df_new_source = pandas.read_csv(data_source,usecols=selected_cols)
-                        df_new_source.drop_duplicates(keep = 'first', inplace = True)
-                        df_new_source = df_new_source[selected_cols]
-                        df_new_source.to_csv(new_source_file, index=False)
-                        deselected_cols.append(object_value)
-                        new_triplesmap_uri = URIRef("#"+str(object_value))
-                        new_source = BNode()
-                        new_subject = BNode()
-                        #predicate = BNode()
-                        #object = BNode()
-                        new_join_condition=BNode()
-                        new_subject_term=Literal("{"+object_value+"}")
+                    new_source_file = v_csv_output_path+mapping_file_name+"-PT_{}.csv"
+                    new_source_file = new_source_file.format(join_condition+object_value)
+                    selected_cols =[ join_condition, object_value]
+                    df_new_source = pandas.read_csv(data_source,usecols=selected_cols)
+                    df_new_source.drop_duplicates(keep = 'first', inplace = True)
+                    df_new_source = df_new_source[selected_cols]
+                    df_new_source.to_csv(new_source_file, index=False)
+                    deselected_cols.append(object_value)
+                    new_triplesmap_uri = URIRef("#"+str(object_value))
+                    new_source = BNode()
+                    new_subject = BNode()
+                    #predicate = BNode()
+                    #object = BNode()
+                    new_join_condition=BNode()
+                    
+                    new_rml_graph.namespace_manager.bind('rml', rml, override = True, replace=True)
+                    new_rml_graph.namespace_manager.bind('ql', ql, override = True, replace=True)
+                    new_rml_graph.namespace_manager.bind('rr', r2rml, override = True, replace=True)
+                    new_rml_graph.namespace_manager.bind('mThesis', mThesis, override = True, replace=True)
+                    
+                    new_rml_graph.add( (new_triplesmap_uri, RDF.type,r2rml['TriplesMap'] ) )
+                    
+                    new_rml_graph.add( (new_triplesmap_uri, rml['logicalSource'], new_source) )
+                    new_rml_graph.add( (new_source, rml['source'], Literal(new_source_file)) )
+                    new_rml_graph.add( (new_source, rml['referenceFormulation'], ql['CSV']) )
+                    new_rml_graph.add( (new_triplesmap_uri, r2rml['subjectMap'], new_subject) )
+                    
+                    #to make the joins work for rocketrml, I need to ignore {}
+                    new_subject_term=Literal("mThesis:"+object_value)
+                    #new_subject_term=Literal(object_value)
+                    #new_subject_term=Literal("{"+object_value+"}")
+                    
+                    #to make the joins work for rocketrml, I need to change template to reference
+                    new_rml_graph.add( (new_subject, r2rml['template'], new_subject_term) )
+                    #new_rml_graph.add( (new_subject, r2rml['reference'], new_subject_term) )
+                    #new_rml_graph.add( (new_subject, r2rml['template'], new_subject_term) )
+                    
+                    object_map_node=new_rml_graph.value(subject=None,predicate=rml['reference'], object=Literal(object_value))                        
+                    new_rml_graph.add( (object_map_node, r2rml['parentTriplesMap'], new_triplesmap_uri) )
+                    new_rml_graph.add( (object_map_node, r2rml['joinCondition'], new_join_condition) )
+                    new_rml_graph.add( (new_join_condition, r2rml['child'], Literal(join_condition)) )
+                    new_rml_graph.add( (new_join_condition, r2rml['parent'], Literal(join_condition)) )
+                    new_rml_graph.remove( (object_map_node, rml['reference'], Literal(object_value)) )
+                    
+                    print("________________________________creating new triples map________________________________")
                         
-                        new_rml_graph.namespace_manager.bind('rml', rml, override = True, replace=True)
-                        new_rml_graph.namespace_manager.bind('ql', ql, override = True, replace=True)
-                        new_rml_graph.namespace_manager.bind('rr', r2rml, override = True, replace=True)
-                        new_rml_graph.namespace_manager.bind('mThesis', mThesis, override = True, replace=True)
-                        
-                        new_rml_graph.add( (new_triplesmap_uri, rml['logicalSource'], new_source) )
-                        new_rml_graph.add( (new_source, rml['source'], Literal(new_source_file)) )
-                        new_rml_graph.add( (new_source, rml['referenceFormulation'], ql['CSV']) )
-                        new_rml_graph.add( (new_triplesmap_uri, r2rml['subjectMap'], new_subject) )
-                        new_rml_graph.add( (new_subject, r2rml['template'], new_subject_term) )
-                        object_map_node=new_rml_graph.value(subject=None,predicate=rml['reference'], object=Literal(object_value))                        
-                        new_rml_graph.add( (object_map_node, r2rml['parentTriplesMap'], new_triplesmap_uri) )
-                        new_rml_graph.add( (object_map_node, r2rml['joinCondition'], new_join_condition) )
-                        new_rml_graph.add( (new_join_condition, r2rml['child'], Literal(join_condition)) )
-                        new_rml_graph.add( (new_join_condition, r2rml['parent'], Literal(join_condition)) )
-                        new_rml_graph.remove( (object_map_node, rml['reference'], Literal(object_value)) )
-                        
-                        print("________________________________creating new triples map________________________________")
-                        
-        #old_source_file='/mnt/c/Users/TorabinejadM/Desktop/Thesis/implementation/sdm-tib-github/rml-normalizer/source/data/tree.csv'
-        new_source_file = output_path+"/main.csv"
-        df_new_source = pandas.read_csv(data_source)
-        df_new_source = df_new_source.drop(deselected_cols, axis=1)
+        selected_cols=[]
+        mapping_file_name=mapping_file_name+"-"+"CT_"
+        selected_cols.append(re.search("{(.+?)}",triples_map.subject_map.value).group(1))
+        mapping_file_name=mapping_file_name+selected_cols[0]
+        for pom_item in triples_map.predicate_object_maps_list:
+            selected_cols.append(pom_item.object_map.value)
+            mapping_file_name=mapping_file_name+pom_item.object_map.value
+            
+        new_source_file = v_csv_output_path+mapping_file_name+".csv"
+        df_new_source = pandas.read_csv(triples_map.data_source,usecols=selected_cols)
+        df_new_source.drop_duplicates(keep = 'first', inplace = True)
+        df_new_source = df_new_source[selected_cols]
         df_new_source.to_csv(new_source_file, index=False)
+        
         old_source_file=new_rml_graph.value(subject=logial_source_node,predicate=rml['source'], object=None)
-        print(old_source_file)
         new_rml_graph.add( (logial_source_node, rml['source'], Literal(new_source_file)) )
         new_rml_graph.remove( (logial_source_node, rml['source'], Literal(old_source_file)) )
-        new_rml_graph.serialize(destination=new_rml_file, format='n3')
+        new_rml_graph.serialize(destination=new_rml_file, format='n3',base="http://tib.de/ontario/mapping#")
+        shutil.copyfile(old_source_file, v_csv_output_path+os.path.basename(old_source_file))
+        shutil.copyfile(mapping_file, v_mapping_output_path+os.path.basename(mapping_file))
     except Exception as e:
-                print(e)
+        print(e)
 
-def normalize(config_path):
+def normalize(config_path,csv_output_path=".\\experiments\\csv\\",mapping_output_path=".\\experiments\\mappings\\"):
+        global v_csv_output_path
+        v_csv_output_path=csv_output_path
+        v_mapping_output_path=mapping_output_path
         dt_format='%d.%m.%Y %H:%M:%S,%f'
         dt_now = datetime.datetime.now().strftime(dt_format)
         print("started at:",dt_now)
@@ -380,18 +403,19 @@ def normalize(config_path):
         config.read(config_path)
         output_path = config["datasets"]["output_folder"]
         with ThreadPoolExecutor(max_workers=10) as executor:
-                for dataset_number in range(int(config["datasets"]["number_of_datasets"])):
-                                dataset_i = "dataset" + str(int(dataset_number) + 1)
-                                print(config[dataset_i]["mapping"])
-                                mapping_file=config[dataset_i]["mapping"]
-                                triples_map_list = mapping_parser(mapping_file)
-                                fd_list = fd_parser(config[dataset_i]["closure"])
-                                for triples_map in triples_map_list:
-                                        with open(str(triples_map.data_source)) as data_source:
-                                                    data = csv.DictReader(data_source, delimiter=',')
-                                                    print("---------------------- Normalization started ... ----------------------")
-                                                    executor.submit(normalize_rules,triples_map,fd_list,triples_map.data_source,output_path,mapping_file)
-                                                    print("---------------------- Normalization done! ----------------------")
+            for dataset_number in range(int(config["datasets"]["number_of_datasets"])):
+                dataset_i = "dataset" + str(int(dataset_number) + 1)
+                print(config[dataset_i]["mapping"])
+                mapping_file=config[dataset_i]["mapping"]
+                triples_map_list = mapping_parser(mapping_file)
+                
+                fd_list = fd_parser(config[dataset_i]["closure"])
+                for triples_map in triples_map_list:
+                    with open(str(triples_map.data_source)) as data_source:
+                        data = csv.DictReader(data_source, delimiter=',')
+                        print("---------------------- Normalization started ... ----------------------")
+                        executor.submit(normalize_rules,triples_map,fd_list,triples_map.data_source,output_path,mapping_file)
+                        print("---------------------- Normalization done! ----------------------")
         
         dt_now = datetime.datetime.now().strftime(dt_format)
         print("finished at:",dt_now)                                            

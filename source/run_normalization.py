@@ -1,3 +1,3 @@
 from normalization.normalize import normalize
 import sys
-normalize("configfile.ini")
+normalize(config_path=str(sys.argv[1]),csv_output_path=str(sys.argv[2]),mapping_output_path=str(sys.argv[3]))
