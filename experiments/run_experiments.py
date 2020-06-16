@@ -9,38 +9,50 @@ global stat_data
 
 def install_tools():
     if os.path.exists("rmlmapper")==True:
-        if os.path.exists(".\\rmlmapper\\target_backup\\target\\")==True:
-            shutil.rmtree(".\\rmlmapper\\target_backup\\target\\")
-        shutil.copytree(".\\rmlmapper\\target\\", ".\\rmlmapper\\target_backup\\target\\")
-        shutil.rmtree(".\\rmlmapper\\target\\")
-        os.system("git -C .\\rmlmapper pull origin master")
+        if os.path.exists(".//rmlmapper//target_backup//target//")==True:
+            shutil.rmtree(".//rmlmapper//target_backup//target//")
+        shutil.copytree(".//rmlmapper//target//", ".//rmlmapper//target_backup//target//")
+        shutil.rmtree(".//rmlmapper//target//")
+        os.system("git -C .//rmlmapper pull origin master")
         pom=[]
-        with open(".\\rmlmapper\\pom.xml", 'r') as f_read:
+        with open(".//rmlmapper//pom.xml", 'r') as f_read:
             pom=f_read.readlines()
             pom_bkp=pom[:]
             pom_finalname=list(filter(lambda x: "<finalName>" in x, pom))
             pom_line=pom.index(pom_finalname[0])
             pom_finalname_value=pom[pom_line].strip()
             pom[pom_line]=pom[pom_line].replace(pom_finalname_value,"<finalName>rmlmapper</finalName>")
-        f_write=open(".\\rmlmapper\\pom.xml", 'w') 
+        f_write=open(".//rmlmapper//pom.xml", 'w') 
         f_write.writelines(pom)
         f_write.close()
-        os.system("mvn clean install -DskipTests -f .\\rmlmapper")
-        f_write=open(".\\rmlmapper\\pom.xml", 'w') 
+        os.system("mvn clean install -DskipTests -f .//rmlmapper")
+        f_write=open(".//rmlmapper//pom.xml", 'w') 
         f_write.writelines(pom_bkp)
         f_write.close()
-        #os.system("mvn clean install -DskipTests -f C:\\Users\TorabinejadM\Desktop\Thesis\implementation\\normalization-experiments\\rmlmapper")
+        #os.system("mvn clean install -DskipTests -f C://Users\TorabinejadM\Desktop\Thesis\implementation//normalization-experiments//rmlmapper")
     else:
         os.system("git clone https://github.com/RMLio/rmlmapper-java.git rmlmapper")
-        os.system("mvn clean install -DskipTests -f .\\rmlmapper")
+        os.system("mvn clean install -DskipTests -f .//rmlmapper")
     
-    if os.path.exists("rocketrml")==True:
-        os.system("git -C .\\rocketrml pull origin master")
+    #if os.path.exists("rocketrml")==True:
+    #    os.system("git -C .//rocketrml pull origin master")
+    #else:
+    #    os.system("git clone https://github.com/semantifyit/RocketRML.git rocketrml")
+    
+    if os.path.exists("rocket-rml")==True:
+        shutil.rmtree(".//rocket-rml//")
+        os.mkdir("rocket-rml")
+        shutil.copy("index.js",".//rocket-rml//")
+        os.system("npm init -y")
+        os.system("npm i rocketrml")
     else:
-        os.system("git clone https://github.com/semantifyit/RocketRML.git rocketrml")
+        os.mkdir("rocket-rml")
+        shutil.copy("index.js",".//rocket-rml//")
+        os.system("npm init -y")
+        os.system("npm i rocketrml")
     
     if os.path.exists("sdm-rdfizer")==True:
-        os.system("git -C .\\sdm-rdfizer pull origin master")
+        os.system("git -C .//sdm-rdfizer pull origin master")
     else:
         os.system("git clone https://github.com/SDM-TIB/SDM-RDFizer.git sdm-rdfizer")
 
@@ -48,12 +60,11 @@ def run_experiments():
     global stat_data
     stat_data=""
     #print(__name__)
-    os.system("echo ***************Start***************************")
-    #default_main_dir="C:\\Users\TorabinejadM\Desktop\Thesis\implementation\\sdm-tib-github\\rml-normalizer\\experiments"
+    #default_main_dir="C://Users\TorabinejadM\Desktop\Thesis\implementation//sdm-tib-github//rml-normalizer//experiments"
     default_main_dir="."
-    default_map_folder="\\mappings\\"
-    default_output_folder="\\graph\\"
-    default_config_folder="\\rdfizer\\"
+    default_map_folder="//mappings//"
+    default_output_folder="//graph//"
+    default_config_folder="//rdfizer//"
     default_stats_header="NAME,RDFIZER,STARTED_AT,EXECUTION_TIME"
     default_stats_filename="all_stats.csv"
     #used only for SDM-rdfizer
@@ -64,12 +75,12 @@ def run_experiments():
     rdfizers=["rocketrml","sdm-rdfizer","rmlmapper"]
     
     #used only for SDM-rdfizer
-    config_file=default_main_dir+"\\sdm-rdfizer\\rdfizer\\"+default_config_filename
+    config_file=default_main_dir+"//sdm-rdfizer//rdfizer//"+default_config_filename
     
     dt_format='%d.%m.%Y %H:%M:%S,%f'
     
     #Due to complexities for cloning and installing rocketrml, the development of this function is already stopped. It can be dveloped further at a later time.
-    #install_tools()
+    install_tools()
     
     try:
         with open(default_main_dir+default_output_folder+default_stats_filename, 'r') as f_in:
@@ -87,7 +98,7 @@ def run_experiments():
             #mapping_file=default_main_dir+default_map_folder+mapping_name+".ttl"
             
             for i in rdfizers:
-                os.system("echo *************** "+i+" is rdfizing dataset "+mapping_name+" ***************************")
+                os.system("echo ====================== "+i+" is rdfizing dataset "+mapping_name+" ======================")
                 #output_name=str(os.path.splitext(entry)[0])+"-"+rdfizers[i]
                 output_name=str(os.path.splitext(entry)[0])+"-"+i
                 output_path=default_main_dir+default_output_folder
@@ -104,13 +115,13 @@ def run_experiments():
                     config.set("dataset1", "mapping",mapping_file)
                     with open(config_file, 'w') as configfile:
                         config.write(configfile)
-                    v_call="python .\\sdm-rdfizer\\rdfizer\\run_rdfizer.py "+ config_file
+                    v_call="python .//sdm-rdfizer//rdfizer//run_rdfizer.py "+ config_file
                 elif i=="rmlmapper":
                     v_arguments="-m "+mapping_file+" -o "+output_file + " -d"
-                    v_call="java -jar .\\rmlmapper\\target\\rmlmapper.jar "+v_arguments
+                    v_call="java -jar .//rmlmapper//target//rmlmapper.jar "+v_arguments
                 elif i=="rocketrml":
                     v_arguments=mapping_file+" "+output_file
-                    v_call="node .\\rocket-rml\\index.js "+v_arguments
+                    v_call="node .//rocket-rml//index.js "+v_arguments
             
                 dt_now = datetime.now().strftime(dt_format)
                 start_time=time.time()
@@ -126,6 +137,7 @@ def run_experiments():
                 if i=="sdm-rdfizer":
                     os.remove(default_main_dir+default_output_folder+"stats.csv")
                     os.remove(default_main_dir+default_output_folder+mapping_name+"_datasets_stats.csv")
+                os.system("echo ====================== "+i+" is finished with rdfizing dataset "+mapping_name+" ======================")
         else:
             pass
     
