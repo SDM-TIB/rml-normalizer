@@ -39,8 +39,8 @@ default_config_filename="configfile.ini"
 #default_main_dir_var="${default:main_directory}"
 
 mapping_name="mapping"
-#rdfizers=["rocketrml","sdm-rdfizer","rmlmapper"]
-rdfizers=["sdm-rdfizer"]
+rdfizers=["rocketrml","sdm-rdfizer","rmlmapper"]
+#rdfizers=["sdm-rdfizer"]
 
 #used only for SDM-rdfizer
 config_file=".//app//experiments//sdm-rdfizer//rdfizer//"+default_config_filename
@@ -217,6 +217,7 @@ def call_tools(entry,rdfizer_name,start_time):
         
         start_time=time.time()
         proc = subprocess.Popen(call_args,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        proc.wait()
         elpased_time=time.time()-start_time
         err_flag=0
         while True:
