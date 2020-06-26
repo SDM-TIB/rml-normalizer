@@ -1,0 +1,16 @@
+@prefix rml: <http://semweb.mmlab.be/ns/rml#> .
+
+<#Employee> rml:key [rml:column_name "A";
+																					rml:determine [rml:column_name "E"
+																																			];
+																					rml:determine [rml:column_name "K";
+																																				rml:dependant "E"
+																																			];
+																					rml:determine [rml:column_name "L";
+																																				rml:dependant "E"
+																																			];
+																					rml:determine [rml:column_name "J";
+																																				rml:dependant "E"
+																																			];
+																				].
+																				
