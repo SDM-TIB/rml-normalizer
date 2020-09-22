@@ -1,0 +1,20 @@
+@prefix fd: <http://semweb.mmlab.be/ns/rml#> .
+
+<#Example> fd:key [fd:column_name "{A}";
+																					fd:determine [fd:column_name "B";
+																																				fd:dependant "{A}";
+																																			];
+																					fd:determine [fd:column_name "C";
+																																				fd:dependant "{B}";
+																																			];
+																					fd:determine [fd:column_name "D";
+																																				fd:dependant "{C}";
+																																			];
+																					fd:determine [fd:column_name "E";
+																																				fd:dependant "{C}"
+																																			];
+																					fd:determine [fd:column_name "F";
+																																				fd:dependant "{C}"
+																																			]
+																				].
+
