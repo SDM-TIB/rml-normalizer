@@ -1,0 +1,18 @@
+@base <http://tib.de/ontario/mapping#> .
+@prefix ex: <http://example.com/> .
+@prefix ql: <http://semweb.mmlab.be/ns/ql#> .
+@prefix rml: <http://semweb.mmlab.be/ns/rml#> .
+@prefix rr: <http://www.w3.org/ns/r2rml#> .
+
+<#sample_mutation> a rr:TriplesMap ;
+    rml:logicalSource [ rml:referenceFormulation ql:CSV ;
+            rml:source ".//app//experiments//csv//100k_sample_mutation.csv" ] ;
+    rr:predicateObjectMap [ rr:objectMap [ rml:reference "SAMPLE_ID" ] ;
+            rr:predicate ex:SAMPLE_ID ],
+        [ rr:objectMap [ rml:reference "Mutation_somatic_status" ] ;
+            rr:predicate ex:Mutation_somatic_status ],
+        [ rr:objectMap [ rml:reference "Gene_CDS_length" ] ;
+            rr:predicate ex:Gene_CDS_length ] ;
+    rr:subjectMap [ rr:class ex:MUTATION_ID ;
+            rr:template "http://example.com/Mutation/{MUTATION_ID}" ] .
+

@@ -271,7 +271,7 @@ def run_generation(number_of_datasets=1,output_path=".\\output\\"):
         
         rules = ConfigParser(interpolation=ExtendedInterpolation())
         rules.read(".//app//source//configfile.ini")
-        rules["datasets"]["number_of_datasets"]=""
+        rules["default"]["name_of_datasets"]=""
 
 
 
@@ -285,7 +285,7 @@ def run_generation(number_of_datasets=1,output_path=".\\output\\"):
             
             tree_file_name=os.path.splitext((os.path.basename(tree_file)))[0]
             
-            rules["datasets"]["number_of_datasets"]=rules["datasets"]["number_of_datasets"]+str(tree_file_name+".csv")+","
+            rules["default"]["name_of_datasets"]=rules["default"]["name_of_datasets"]+str(tree_file_name+".csv")+","
             
             start_time=None
             start_time=log_calls("update_input_config",start_time)
@@ -308,7 +308,7 @@ def run_generation(number_of_datasets=1,output_path=".\\output\\"):
             stat_data=stat_data+os.path.basename(tree_file)+",\""+str(dt_now)+"\","+str(elpased_time)+"\n"
         
         
-        rules["datasets"]["number_of_datasets"]=str(rules["datasets"]["number_of_datasets"])[:-1]
+        rules["default"]["name_of_datasets"]=str(rules["default"]["name_of_datasets"])[:-1]
         with open(".//app//source//configfile.ini", 'w') as configfile:
             rules.write(configfile)
 

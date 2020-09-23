@@ -1,0 +1,20 @@
+@prefix fd: <http://example-fd-set.com/> .	
+
+<#Employee> fd:key [fd:column_name "{SAMPLE_ID,MUTATION_ID}";
+																					fd:determine [fd:column_name "MUTATION_ID";
+																																				fd:dependant "{SAMPLE_ID,MUTATION_ID}";
+																																			];
+																					fd:determine [fd:column_name "SAMPLE_ID";
+																																				fd:dependant "{SAMPLE_ID,MUTATION_ID}";
+																																			];
+																					fd:determine [fd:column_name "Mutation_somatic_status";
+																																				fd:dependant "{MUTATION_ID}"
+																																			];
+																					fd:determine [fd:column_name "Gene_CDS_length";
+																																				fd:dependant "{MUTATION_ID}"
+																																			];
+																					fd:determine [fd:column_name "Mutation_Description";
+																																				fd:dependant "{MUTATION_ID}"
+																																			]
+																				].
+

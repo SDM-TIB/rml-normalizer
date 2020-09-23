@@ -1,0 +1,16 @@
+@base <http://tib.de/ontario/mapping#> .
+@prefix mThesis: <http://mThesis.eu/vocab/> .
+@prefix ql: <http://semweb.mmlab.be/ns/ql#> .
+@prefix rml: <http://semweb.mmlab.be/ns/rml#> .
+@prefix rr: <http://www.w3.org/ns/r2rml#> .
+
+<#Employee> a rr:TriplesMap ;
+    rml:logicalSource [ rml:referenceFormulation ql:CSV ;
+            rml:source ".//app//experiments//csv//3nf_1join--4M_250.csv" ] ;
+    rr:predicateObjectMap [ rr:objectMap [ rml:reference "B" ] ;
+            rr:predicate mThesis:emp_B ],
+        [ rr:objectMap [ rml:reference "C" ] ;
+            rr:predicate mThesis:emp_C ] ;
+    rr:subjectMap [ rr:class mThesis:employee ;
+            rr:template "http://master-thesis/Employee/{A}" ] .
+

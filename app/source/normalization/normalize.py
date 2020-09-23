@@ -319,23 +319,23 @@ def fd_parser(mapping_file):
             sys.exit(1)
             
         fd_query="""
-            prefix rml: <http://semweb.mmlab.be/ns/rml#>
+            prefix fd: <http://example-fd-set.com/>
             SELECT DISTINCT ?attr_name ?_attr ?_dep
             WHERE {
-                ?triples_map_id rml:key ?_key.
-                ?_key rml:column_name ?pkey.
-                OPTIONAL {?_key rml:determine ?_attr.
-                          ?_attr rml:column_name ?attr_name.
-                OPTIONAL {?_attr rml:dependant ?_dep}
+                ?triples_map_id fd:key ?_key.
+                ?_key fd:column_name ?pkey.
+                OPTIONAL {?_key fd:determine ?_attr.
+                          ?_attr fd:column_name ?attr_name.
+                OPTIONAL {?_attr fd:dependant ?_dep}
                 }
                 }"""
         
         pk_query="""
-            prefix rml: <http://semweb.mmlab.be/ns/rml#>
+            prefix fd: <http://example-fd-set.com/>
             SELECT DISTINCT *
             WHERE {
-                ?triples_map_id rml:key ?_key.
-                ?_key rml:column_name ?pkey.
+                ?triples_map_id fd:key ?_key.
+                ?_key fd:column_name ?pkey.
                 }"""
         
         mapping_query_results = mapping_graph.query(fd_query)
@@ -358,7 +358,7 @@ def fd_parser(mapping_file):
         log_error("fd_parser",e)
         return None
         
-def normalize_rules(triples_map, fd_file, data_source, mapping_file,dataset_type,exp_type,closure_name,pk_list,dataset_index,dataset_name,rule_index):
+def normalize_rules(triples_map, fd_file, data_source, mapping_file,pk_list,dataset_index,dataset_name,rule_index):
     try:
         start_time=time.time()
         global before_size_list
@@ -424,17 +424,11 @@ def normalize_rules(triples_map, fd_file, data_source, mapping_file,dataset_type
         
         for obj in object_list:
             fd_set=fd_list.get(str(obj))
-            print(obj)
-            if fd_set:
-                print(fd_set[0])
-            print(subject_list)
             if fd_set:
                 if set(fd_set[0])==set(subject_list) and len(fd_set)==1 and obj not in subject_list:
-                    print(obj)
                     object_list_on_sub.append(obj)
         
         object_list_on_sub.extend(subject_list)
-        print(object_list_on_sub)
         for item in pk_list:
             if set(subject_list)==set(item):
                 sub_is_pk=True
@@ -442,8 +436,6 @@ def normalize_rules(triples_map, fd_file, data_source, mapping_file,dataset_type
         
         if object_list_on_sub and len(set(object_list_on_sub)-set(subject_list))!=len(object_list):
             set_rem_obj=set(object_list)-set(object_list_on_sub)
-            print(object_list_on_sub)
-            print("remaining: "+str(set_rem_obj))
             if sub_is_pk:
                 for obj in set_rem_obj:
                     common_rem_dep_obj=[]
@@ -558,7 +550,7 @@ def normalize_rules(triples_map, fd_file, data_source, mapping_file,dataset_type
                     
                     exp_config["rule"+str(dataset_index*rule_index*2-1)]["dataset_name"]=str(exp_config["rule"+str(dataset_index*rule_index*2-1)]["dataset_name"])+os.path.basename(new_source_file)+","
                     
-                    df_new_source = pandas.read_csv(".//app//source//data//"+dataset_name,usecols=selected_cols)
+                    df_new_source = pandas.read_csv(".//app//source//data//"+dataset_name,usecols=selected_cols,dtype=str)
                     df_new_source.drop_duplicates(keep = 'first', inplace = True)
                     df_new_source = df_new_source[selected_cols]
                     df_new_source.to_csv(v_main_dir+new_source_file, index=False)
@@ -729,11 +721,10 @@ def normalize(config_path="C:\\Users\\TorabinejadM\\Desktop\\Thesis\\implementat
         v_mapping_output_path=mapping_output_path
         config = ConfigParser(interpolation=ExtendedInterpolation())
         config.read(config_path)
-        number_of_tuples = config["datasets"]["number_of_tuples"]
-        number_of_datasets=str(config["datasets"]["number_of_datasets"])
-        exp_type=config["datasets"]["type"]
-        number_of_rules=int(config["datasets"]["number_of_rules"])
-        list_datasets=number_of_datasets.split(",")
+        name_of_datasets=str(config["default"]["name_of_datasets"])
+        number_of_rules=int(config["default"]["number_of_rules"])
+        fd_file=str(config["default"]["fd"])
+        list_datasets=name_of_datasets.split(",")
         
         default_stats_header="NAME,STARTED_AT,EXECUTION_TIME"
         try:
@@ -746,36 +737,28 @@ def normalize(config_path="C:\\Users\\TorabinejadM\\Desktop\\Thesis\\implementat
         exp_config = ConfigParser(interpolation=ExtendedInterpolation())
         exp_config.read(".//app//experiments//configfile.ini")
         exp_config["rules"]["number_of_rules"]=str(2*number_of_rules*len(list_datasets))
-        exp_config["rules"]["number_of_datasets"]=str(len(list_datasets))
 
         for rule in range(0,number_of_rules):
-            list_datasets=number_of_datasets.split(",")
+            list_datasets= [ds_name.strip() for ds_name in name_of_datasets.split(",")]
             for dataset_number in range(0,len(list_datasets)):
-                dataset_i = "dataset" + str(int(rule) + 1)
-                dataset_type=config[dataset_i]["type"]
-                if exp_type=="Normalized" and dataset_type=="before":
-                    source_file_names.append(config[dataset_i]["name"])
-                elif exp_type=="Original":
-                    source_file_names.append(config[dataset_i]["name"])
-                    
+                rule_i = "rule" + str(int(rule) + 1)
              
-                mapping_file=config[dataset_i]["mapping"]
+                mapping_file=config[rule_i]["mapping"]
                 triples_map_list = mapping_parser(mapping_file)
-                
-                closure_name=os.path.splitext((os.path.basename(config[dataset_i]["fd"])))[0]
             
                 start_time=None
                 start_time=log_calls("Normalization of dataset "+os.path.basename(list_datasets[dataset_number]),start_time)
                 dt_now = datetime.now().strftime(dt_format)
             
-                fd_list,pk_list = fd_parser(config[dataset_i]["fd"])
+                fd_list,pk_list = fd_parser(fd_file)
                 for triples_map in triples_map_list:
-                    normalize_rules(triples_map,fd_list,triples_map.data_source,mapping_file,dataset_type,exp_type,closure_name,pk_list,dataset_number+1,list_datasets[dataset_number],rule+1)
+                    normalize_rules(triples_map,fd_list,triples_map.data_source,mapping_file,pk_list,dataset_number+1,list_datasets[dataset_number],rule+1)
             
                 elpased_time=log_calls("Normalization of dataset "+os.path.basename(list_datasets[dataset_number]),start_time)
                 
             with open(v_main_dir+"graph//normalizer_times.csv", 'a+',newline="") as f_out:
-                f_out.write(stat_data)
+                print(dt_now)
+                f_out.write(str(os.path.splitext((os.path.basename(mapping_file)))[0])+",\""+str(dt_now)+"\","+str(elpased_time)+"\n")
                 f_out.close()
         
             with open(".//app//experiments//configfile.ini", 'w') as configfile:

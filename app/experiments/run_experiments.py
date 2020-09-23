@@ -24,7 +24,6 @@ file_names_list=[]
 before_size=[]
 after_size=[]
 
-plot_name="4000000"
 stat_data=""
 #default_main_dir="C://Users\TorabinejadM\Desktop\Thesis\implementation//sdm-tib-github//rml-normalizer//experiments"
 default_main_dir="."
@@ -232,7 +231,6 @@ def run_experiments():
         entries = os.listdir(default_map_folder)
         print(entries)
         DIR=default_map_folder
-        number_of_datasets=2
         for i in range(0,int(number_of_rules)):
             entry = config["rule"+str(i+1)]["filename"]
             total_size=0
