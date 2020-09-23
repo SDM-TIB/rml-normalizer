@@ -10,14 +10,14 @@ This command executes subsequently the following different components:
 - RML-normalizer
 - Experiments
 
-As Input, one need to feed the following directories with their corresponding files:
+As Input, one need to feed the following directories with their corresponding input files. Following table shows just the directories along with related input files used in exeriments done in the master thesis of *"Normalization Techniques For Improving The Perfromance Of Knowledge Graph Creation Pipelines"*:
 
-| Directory                              	| Input files|description|
-|---------------------------------------  |-------------|--------------------------------------------------------------------------|
-| app/data_generator/source/generator/    | |Configuration of data generation (in case of generating synthetic data) 														|
-| app/source/data/                						|		| Original CSV data source files (in case of using real data)                           |
-| app/source/fd/          											|					| List of functioanl dependencies holding in the data source, whether real or synthetic.|
-| app/source/mappings/                 			| |Original RML mapping rules defined over the data source                               |
+| Directory                               | Input files             |description|
+|---------------------------------------  |-------------------------|--------------------------------------------------------------------------|
+| app/data_generator/source/generator/    |app/input/data/synthetic/|Configurations for data generation (in case of generating synthetic data) |
+| app/source/data/                	  |app/input/data/real/	    |Original CSV data source files (in case of using real data)              |
+| app/source/fd/          		  |app/input/fd/	    |List of functional dependencies holding in the data source, whether real or synthetic.|
+| app/source/mappings/                 	  |app/input/mappings/	    |Original RML mapping rules defined over the data sources                              |
 
 ## Data generator
 
